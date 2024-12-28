@@ -1,0 +1,82 @@
+% Load and Explore the Dataset
+clc; clear;
+
+% Specify file path (update path if necessary)
+filePath = '/mnt/data/retail_sales_dataset.csv';
+
+% Read the dataset
+data = readtable(filePath);
+
+% Display basic information
+disp('Dataset Summary:');
+disp(summary(data));
+disp('First few rows:');
+disp(head(data));
+
+% Check for missing values
+missingValues = sum(ismissing(data));
+disp('Missing Values in Each Column:');
+disp(missingValues);
+
+% Visualize Missing Data
+figure;
+bar(missingValues);
+title('Missing Data Count per Column');
+xlabel('Columns');
+ylabel('Count of Missing Values');
+xticklabels(data.Properties.VariableNames);
+xtickangle(45);
+
+% Data Cleaning (Handle Missing Data)
+% Replace missing values with column mean (for numerical columns)
+for i = 1:width(data)
+    if isnumeric(data{:, i})
+        data{ismissing(data(:, i)), i} = mean(data{:, i}, 'omitnan');
+    end
+end
+
+% Visualizations
+% Histograms for numerical variables
+numVars = varfun(@isnumeric, data, 'OutputFormat', 'uniform');
+numericData = data(:, numVars);
+
+figure;
+for i = 1:width(numericData)
+    subplot(ceil(sqrt(width(numericData))), ceil(sqrt(width(numericData))), i);
+    histogram(numericData{:, i});
+    title(data.Properties.VariableNames{numVars(i)});
+end
+sgtitle('Histograms of Numerical Variables');
+
+% Boxplots for numerical variables
+figure;
+for i = 1:width(numericData)
+    subplot(ceil(sqrt(width(numericData))), ceil(sqrt(width(numericData))), i);
+    boxplot(numericData{:, i});
+    title(data.Properties.VariableNames{numVars(i)});
+end
+sgtitle('Boxplots of Numerical Variables');
+
+% Correlation Matrix
+if sum(numVars) > 1
+    corrMatrix = corr(table2array(numericData), 'Rows', 'complete');
+    figure;
+    heatmap(data.Properties.VariableNames(numVars), data.Properties.VariableNames(numVars), corrMatrix, 'Colormap', jet, 'ColorbarVisible', 'on');
+    title('Correlation Matrix of Numerical Variables');
+end
+
+% Visualize categorical variables
+catVars = varfun(@iscategorical, data, 'OutputFormat', 'uniform');
+categoricalData = data(:, catVars);
+
+if ~isempty(categoricalData)
+    figure;
+    for i = 1:width(categoricalData)
+        subplot(ceil(sqrt(width(categoricalData))), ceil(sqrt(width(categoricalData))), i);
+        bar(categoricalData.(i).Categories, countcats(categoricalData.(i)));
+        title(data.Properties.VariableNames{catVars(i)});
+    end
+    sgtitle('Bar Plots of Categorical Variables');
+end
+
+disp('EDA completed.');
